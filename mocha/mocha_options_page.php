@@ -76,6 +76,7 @@ function mocha_update_po_strings() {
 	mocha.onCompletion = function() {
 		document.getElementById('mocha_po_strings').innerHTML = mocha.response;
 		document.getElementById('mocha_current_type').value = mocha_type;
+		document.getElementById('mocha_po_submit').style.display = '';
 	}
 	document.getElementById('mocha_po_strings').innerHTML = '<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
 	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
@@ -96,7 +97,7 @@ function mocha_update_po_strings() {
 				<select id="mocha_po_language" name="mocha_po_language">
 				<?php
 				foreach ($gengo->languages as $language) {
-					?><option value=<?= $language->locale ?>><?= $language->language ?></option><?php
+					?><option value=<?= $language->locale ?>><?= "$language->language ($language->locale)"?></option><?php
 				}
 				?>
 				</select>
@@ -119,19 +120,15 @@ function mocha_update_po_strings() {
 		</strong></label>
 		</span>
 		</div>
-		Create or modify using local information.
-		<br />Search for existing localisations on http://wp-multilingual.net.<br />
-
 		<span class="submit">
-    <input type="button" value="<?php _e('Get Localisation', MOCHA_DOMAIN); ?>" onclick="mocha_update_po_strings()" />
-    <input type="button" value="<?php _e('Search ', MOCHA_DOMAIN); ?>" onclick="mocha_search_respository()" />
+    <input type="button" value="<?php _e('Get Strings', MOCHA_DOMAIN); ?>" onclick="mocha_update_po_strings()" />
     </span>
     </p>
 		<div id="mocha_po_strings">
-		<?php _e("Choose a language and localisation type to begin translating.", MOCHA_DOMAIN); ?>
+		<?php _e("Choose a locale and localisation type to begin translating.", MOCHA_DOMAIN); ?>
 		</div>
 		<p class="submit">
-      <input type="submit" name="mocha_po_submit" value="<?php _e('Save localisation &raquo;', MOCHA_DOMAIN); ?>" onclick="if (!document.getElementById('msgstr_prefix')) return false;" />
+      <input type="submit" id="mocha_po_submit" name="mocha_po_submit" value="<?php _e('Save localisation &raquo;', MOCHA_DOMAIN); ?>" style="display: none" onclick="if (!document.getElementById('msgstr_prefix')) return false;" />
     </p>
   </fieldset>
   </form>
