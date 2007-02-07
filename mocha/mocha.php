@@ -55,7 +55,7 @@ define ("MOCHA_MODE_THEME", 3);
 class Mocha {
 
 	function Mocha($ajax = false) {
-		$this->version = 0.1.1;
+		$this->version = '0.1.1';
 		$this->site_url = get_settings('siteurl');
 
 		if (false !== strpos($_SERVER['SERVER_SOFTWARE'], 'Win32')) {
