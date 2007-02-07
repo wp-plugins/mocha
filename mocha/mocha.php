@@ -196,6 +196,7 @@ class Mocha {
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $plugin_root -D $plugin_root " . implode(' ', $plugin_files))) {
 			$this->update_po_headers("$plugin_root/$name.pot", $title, $version);
+			chmod("$plugin_root/$name.pot", 0644);
       return true;
 		} else {
 			return false;
@@ -217,6 +218,7 @@ class Mocha {
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $theme_root -D $theme_root " . implode(' ', $theme_files))) {
 			$this->update_po_headers("$theme_root/$name.pot", $title, $version);
+			chmod("$theme_root/$name.pot", 0644);
       return true;
 		} else {
 			return false;
@@ -239,7 +241,7 @@ class Mocha {
 				$version = $wp_version;
 			  if (!file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
 			    if (!file_exists(ABSPATH . MOCHA_CORE_PO_DIR)) {
-						if (!mkdir(ABSPATH . MOCHA_CORE_PO_DIR)) {
+						if (!mkdir(ABSPATH . MOCHA_CORE_PO_DIR, 0755)) {
 						  $this->error_message(__('Failed to create the languages directory', MOCHA_DOMAIN));
 	   					return false;
 						}
@@ -248,6 +250,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN));
    					return false;
 					}
+					chmod(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo", ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
@@ -278,6 +281,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
+					chmod(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo", ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
@@ -307,6 +311,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
+					chmod(ABSPATH . $theme['Template Dir'] . "/$locale.po", 0644);
 					if (file_exists(ABSPATH . $theme['Template Dir'] . "/$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . $theme['Template Dir'] . "/$locale.mo", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
@@ -376,6 +381,9 @@ class Mocha {
 					  $mode = 'comment';
 		 			} elseif (preg_match('|charset=(.*)\\\\n|', $line, $matches)) {
 						$charset = $matches[1];
+						if ('CHARSET' == $charset) {
+							$charset = get_settings('blog_charset');
+						}
 					}
 					break;
 
@@ -434,29 +442,41 @@ class Mocha {
 		}
 
 		?>
-		<table>
-			<tbody>
+		<div style="width: 100%">
 			<input type="hidden" id="msgstr_prefix" name="translations[0]" value="" />
 			<?php
 			for ($i = 0; $i < $po_count; $i++) {
 				?>
-				<tr><td colspan="2"><strong><?= $locations[$i] ?></strong></td></tr>
-				<tr><td valign="top">"<?= $originals[$i] ?>"</td><td style="width: 65%"><textarea style="width: 100%" name="translations[<?= $i + 1 ?>]"><?= $translations[$i] ?></textarea></td></tr>
-				<tr><td colspan="2"></td></tr>
+				<div>
+						<strong>
+						<?php
+						if ($l = explode(' ', $locations[$i])) {
+						  $location_files = $location_comments = array();
+							foreach ($l as $location) {
+							  if (preg_match('/(.*):(\d+)/', $location, $matches)) {
+									$location_files[$matches[1]][] = $matches[2];
+								}
+							}
+							foreach ($location_files as $location_file => $location_lines) {
+								$location_comments[] = "$location_file:" . implode(',', $location_lines);
+							}
+							echo implode('<br />', $location_comments);
+						}
+						?>
+						</strong>
+				</div>
+				<div>"<?= $originals[$i] ?>"</div>
+				<div style="margin-bottom: 15px"><textarea name="translations[<?= $i + 1 ?>]" rows="4" style="width: 100%"><?= $translations[$i] ?></textarea></div>
 				<?php
 			}
 			?>
-			<tr><td colspan="2">&nbsp;</td></tr>
-			<tr>
-				<td colspan="2">
+			<div>
 				<label for="mocha_po_charset">
 					<strong><?php _e("Charset:", MOCHA_DOMAIN) ?></strong>
 					<input type="text" name="mocha_po_charset" value="<?= $charset ?>" style="padding: 5px" />
 				</label>
-				</td>
-			</tr>
-			</tbody>
-		<table>
+			</div>
+		<div>
 		<?php
 	}
 	
@@ -569,6 +589,7 @@ Security concerns.
 Autosubmit to central repository.
 Plural Forms
 Full Headers
+Breakdown WordPress core files.
 
 */
 

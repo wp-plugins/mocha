@@ -77,12 +77,13 @@ function mocha_update_po_strings() {
 		document.getElementById('mocha_po_strings').innerHTML = mocha.response;
 		document.getElementById('mocha_current_type').value = mocha_type;
 	}
+	document.getElementById('mocha_po_strings').innerHTML = '<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
 	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
 }
 
 </script>
 <div class="wrap">
-  <h2><?php _e('Localisation Generation', MOCHA_DOMAIN) ?></h2>
+  <h2><?php _e('Localisations', MOCHA_DOMAIN) ?></h2>
   <form method="post">
   <fieldset class="options">
 		<p>
