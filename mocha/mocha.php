@@ -111,7 +111,7 @@ class Mocha {
 	  $wordpress_version = (false !== ($position = strpos($wp_version, '-'))) ? substr($wp_version, 0, $position) : $wp_version;
 		$wordpress_pot = ABSPATH . MOCHA_DIR . 'wordpress.pot';
 	  if (ini_get('allow_url_fopen')) {
-      copy("http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot", $wordpress_pot);
+      @copy("http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot", $wordpress_pot);
 		} else {
 			$this->exec_wrapper("wget -O $wordpress_pot http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot");
 		}
@@ -196,7 +196,7 @@ class Mocha {
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $plugin_root -D $plugin_root " . implode(' ', $plugin_files))) {
 			$this->update_po_headers("$plugin_root/$name.pot", $title, $version);
-			chmod("$plugin_root/$name.pot", 0644);
+			@chmod("$plugin_root/$name.pot", 0644);
       return true;
 		} else {
 			return false;
@@ -218,7 +218,7 @@ class Mocha {
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $theme_root -D $theme_root " . implode(' ', $theme_files))) {
 			$this->update_po_headers("$theme_root/$name.pot", $title, $version);
-			chmod("$theme_root/$name.pot", 0644);
+			@chmod("$theme_root/$name.pot", 0644);
       return true;
 		} else {
 			return false;
@@ -246,11 +246,11 @@ class Mocha {
 	   					return false;
 						}
 					}
-					if (!copy(ABSPATH . MOCHA_DIR . 'wordpress.pot', ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
+					if (!@copy(ABSPATH . MOCHA_DIR . 'wordpress.pot', ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN));
    					return false;
 					}
-					chmod(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", 0644);
+					@chmod(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo", ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
@@ -277,11 +277,11 @@ class Mocha {
    						return false;
    					}
 					}
-					if (!copy(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/" . $name . ".pot", ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po")) {
+					if (!@copy(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/" . $name . ".pot", ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po")) {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
-					chmod(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", 0644);
+					@chmod(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo", ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
@@ -307,11 +307,11 @@ class Mocha {
    						return false;
    					}
 					}
-					if (!copy(ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
+					if (!@copy(ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
-					chmod(ABSPATH . $theme['Template Dir'] . "/$locale.po", 0644);
+					@chmod(ABSPATH . $theme['Template Dir'] . "/$locale.po", 0644);
 					if (file_exists(ABSPATH . $theme['Template Dir'] . "/$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . $theme['Template Dir'] . "/$locale.mo", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
 							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);

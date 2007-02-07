@@ -88,6 +88,7 @@ function mocha_update_po_strings() {
   <fieldset class="options">
 		<p>
     <input type="hidden" id="mocha_current_type" value="" />
+		<div>
 		<label for="mocha_po_language"><strong><?php _e("Locale:", MOCHA_DOMAIN) ?></strong>
 			<?php
 			if ($languages) {
@@ -117,8 +118,13 @@ function mocha_update_po_strings() {
 		<select id="mocha_po_name" name="mocha_po_name"><option value=''>Empty</option></select>
 		</strong></label>
 		</span>
+		</div>
+		Create or modify using local information.
+		<br />Search for existing localisations on http://wp-multilingual.net.<br />
+
 		<span class="submit">
-    <input type="button" value="<?php _e('Get Strings', MOCHA_DOMAIN); ?>" onclick="mocha_update_po_strings()" />
+    <input type="button" value="<?php _e('Get Localisation', MOCHA_DOMAIN); ?>" onclick="mocha_update_po_strings()" />
+    <input type="button" value="<?php _e('Search ', MOCHA_DOMAIN); ?>" onclick="mocha_search_respository()" />
     </span>
     </p>
 		<div id="mocha_po_strings">
