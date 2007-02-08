@@ -372,7 +372,6 @@ class Mocha {
 		$header_parsed = false;
 		foreach ($po_contents as $line) {
 		  if (!trim($line)) continue;
-		
 		  switch ($mode) {
 		    case 'header':
 					if ($this->string_starts_with($line, '#:')) {
@@ -390,6 +389,8 @@ class Mocha {
 				case 'comment':
 					if ($this->string_starts_with($line, '#:')) {
 						$locations[$i] .= substr($line, 3) . ' ';
+					} elseif ('#, fuzzy' == trim($line)) {
+						$fuzzy[$i] = true;
 					} elseif ($this->string_starts_with($line, 'msgid') && $header_parsed) {
 						preg_match('/"(.*)"/', $line, $matches);
 						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
@@ -423,6 +424,9 @@ class Mocha {
 						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 						preg_match('/"(.*)"/', $line, $matches);
 						$mode = 'msgid';
+					} elseif ('#, fuzzy' == trim($line)) {
+						$fuzzy[++$i] = true;
+						$mode = 'msgid';
 					} elseif ($this->string_starts_with($line, '"')) {
 						preg_match('/"(.*)"/', $line, $matches);
 						$translations[$i] .= htmlspecialchars($matches[1], ENT_COMPAT, $charset);
@@ -434,6 +438,7 @@ class Mocha {
 			}
 		}
 		$po_count = count($originals);
+		$this->print_j($fuzzy);
 		
 		if (!$po_count) {
 			unlink($file);
@@ -446,6 +451,7 @@ class Mocha {
 			<input type="hidden" id="msgstr_prefix" name="translations[0]" value="" />
 			<?php
 			for ($i = 0; $i < $po_count; $i++) {
+				$style = (isset($fuzzy[$i])) ? 'border: 1px solid #f00;"' : '';
 				?>
 				<div>
 						<strong>
@@ -466,7 +472,7 @@ class Mocha {
 						</strong>
 				</div>
 				<div>"<?= $originals[$i] ?>"</div>
-				<div style="margin-bottom: 15px"><textarea name="translations[<?= $i + 1 ?>]" rows="4" style="width: 100%"><?= $translations[$i] ?></textarea></div>
+				<div style="margin-bottom: 15px;"><textarea name="translations[<?= $i + 1 ?>]" rows="4" style="width: 100%;<?= $style ?>"><?= $translations[$i] ?></textarea></div>
 				<?php
 			}
 			?>
@@ -513,6 +519,8 @@ class Mocha {
 				} else {
 					$updated_contents[] = $po_line;
 				}
+			} elseif ($header_parsed && ('#, fuzzy' == trim($po_line))) {
+			  continue;
 			} elseif ($this->string_starts_with($po_line, '#:')) {
 				$updated_contents[] = $po_line;
 				$header_parsed = true;
@@ -590,7 +598,6 @@ Plural Forms
 Full Headers
 Breakdown WordPress core files?
 Missing wordpress .pot, no option.
-Handle fuzzy translations.
 Error checking matches %s...
 */
 
