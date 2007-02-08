@@ -3,7 +3,7 @@
 Plugin Name: Mocha
 Version: 0.1.1
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
-Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2006 Jamie Talbot.
+Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
 Author URI: http://jamietalbot.com
 
@@ -392,7 +392,7 @@ class Mocha {
 						$locations[$i] .= substr($line, 3) . ' ';
 					} elseif ($this->string_starts_with($line, 'msgid') && $header_parsed) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$originals[$i] = htmlspecialchars($matches[1]);
+						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 						$mode = 'msgid';
 					} elseif (!$this->string_starts_with($line, '#') && $header_parsed) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgid.', MOCHA_DOMAIN), false);
@@ -403,11 +403,11 @@ class Mocha {
 				case 'msgid':
 				  if ($this->string_starts_with($line, 'msgstr')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$translations[$i] = $matches[1];
+						$translations[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 						$mode = 'msgstr';
 					} elseif ($this->string_starts_with($line, '"')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$originals[$i] .=  htmlspecialchars($matches[1]);
+						$originals[$i] .= htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 					} elseif (!$this->string_starts_with($line, '#')) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgid.', MOCHA_DOMAIN), false);
 						return false;
@@ -420,12 +420,12 @@ class Mocha {
 						$mode = 'comment';
 					} elseif ($this->string_starts_with($line, 'msgid')) {
 						$locations[++$i] = '';
-						$originals[$i] = htmlspecialchars($matches[1]);
+						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 						preg_match('/"(.*)"/', $line, $matches);
 						$mode = 'msgid';
 					} elseif ($this->string_starts_with($line, '"')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$translations[$i] .= $matches[1];
+						$translations[$i] .= htmlspecialchars($matches[1], ENT_COMPAT, $charset);
 					} elseif (!$this->string_starts_with($line, '#')) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgstr.', MOCHA_DOMAIN), false);
 						return false;
@@ -505,7 +505,7 @@ class Mocha {
 		$header_parsed = false;
 		foreach ($po_contents as $po_line) {
 			if ($this->string_starts_with($po_line, 'msgstr')) {
-				$updated_contents[] = 'msgstr "' . $translations[$i++] . "\"\n";
+				$updated_contents[] = 'msgstr "' . stripslashes($translations[$i++]) . "\"\n";
 				$mode = 'msgstr';
 			} elseif ($this->string_starts_with($po_line, '"')) {
 				if ($header_parsed && ('msgstr' == $mode)) {
@@ -584,13 +584,14 @@ if (isset($_POST['mocha_ajax'])) {
 $mocha = new Mocha();
 
 /*
-
 Security concerns.
 Autosubmit to central repository.
 Plural Forms
 Full Headers
-Breakdown WordPress core files.
-
+Breakdown WordPress core files?
+Missing wordpress .pot, no option.
+Handle fuzzy translations.
+Error checking matches %s...
 */
 
 ?>
