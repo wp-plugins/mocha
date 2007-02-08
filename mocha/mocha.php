@@ -451,7 +451,6 @@ class Mocha {
 			}
 		}
 		$po_count = count($originals);
-		$this->print_j($fuzzy);
 		
 		if (!$po_count) {
 			unlink($file);
@@ -548,7 +547,8 @@ class Mocha {
 	function save_po_strings() {
 	  global $current_user;
 	  
-		$locale = $_POST['mocha_po_language'];
+		$locale = $_POST['mocha_po_locale'];
+		$language = $_POST['mocha_po_language'];
 		$type = $_POST['mocha_po_type'];
 		$name = $_POST['mocha_po_name'];
 		$charset = $_POST['mocha_po_charset'];
