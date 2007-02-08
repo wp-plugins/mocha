@@ -2,13 +2,6 @@
 
 $mocha->present_feedback();
 
-// Populate the source options.
-if ($gengo) {
-	$languages = $gengo->languages ? $gengo->languages : '';
-} else {
-	$languages = '';
-}
-
 $themes = get_themes();
 $plugins = get_plugins();
 
@@ -36,6 +29,22 @@ $i = 0;
 foreach ($themes as $theme) { if ($i++) echo ', '; echo '"' . $theme['Name'] . '", "' . $theme['Template'] . '"'; }
 ?>);
 
+<?php
+// Populate the source options.
+if ($gengo && $gengo->languages) {
+	?>
+	var mocha_languages = new Array();
+	<?php
+	$languages = $gengo->languages;
+	foreach ($gengo->languages as $language) {
+		?>mocha_languages['<?= $language->locale ?>'] = '<?= $language->language ?>';<?php
+	}
+} else {
+	$languages = '';
+}
+
+?>
+
 if (typeof(sack) != 'undefined') {
 	var mocha = new sack(mocha_script_uri);
 	mocha.method = 'POST';
@@ -57,12 +66,33 @@ function mocha_filter_po_name() {
 	}
 }
 
-function mocha_update_po_strings() {
-	var language_input = document.getElementById('mocha_po_language');
-	if (language_input.type) {
-		var mocha_language = language_input.value;
+function mocha_check_inputs() {
+	var locale_input = document.getElementById('mocha_po_locale');
+	if (locale_input.type) {
+		var mocha_locale = locale_input.value;
 	} else {
-		var mocha_language = language_input.options[language_input.selectedIndex].value;
+		var mocha_locale = locale_input.options[language_input.selectedIndex].value;
+		document.getElementById('mocha_po_language').value = mocha_languages[mocha_locale];
+	}
+	var language_input = document.getElementById('mocha_po_language');
+
+	if (('' == locale_input) || ('' == language_input)) {
+		return false;
+	}
+}
+
+function mocha_update_po_strings() {
+	var locale_input = document.getElementById('mocha_po_locale');
+	if ('text' == locale_input.type) {
+		var mocha_locale = locale_input.value;
+	} else {
+		var mocha_locale = locale_input.options[locale_input.selectedIndex].value;
+		document.getElementById('mocha_po_language').value = mocha_languages[mocha_locale];
+	}
+	var mocha_language = document.getElementById('mocha_po_language').value;
+
+	if (('' == mocha_locale) || ('' == mocha_language)) {
+		return false;
 	}
 
 	var mocha_type = document.getElementById('mocha_po_type').options[document.getElementById('mocha_po_type').selectedIndex].value;
@@ -79,7 +109,7 @@ function mocha_update_po_strings() {
 		document.getElementById('mocha_po_submit').style.display = '';
 	}
 	document.getElementById('mocha_po_strings').innerHTML = '<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
-	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
+	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_locale + '&language=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
 }
 
 </script>
@@ -89,11 +119,13 @@ function mocha_update_po_strings() {
   <fieldset class="options">
 		<p>
     <input type="hidden" id="mocha_current_type" value="" />
-		<label for="mocha_po_language"><strong><?php _e("Locale:", MOCHA_DOMAIN) ?></strong>
+		<label for="mocha_po_locale"><strong><?php _e("Locale:", MOCHA_DOMAIN) ?></strong>
 			<?php
 			if ($languages) {
+			  reset($gengo->languages);
 				?>
-				<select id="mocha_po_language" name="mocha_po_language">
+				<input type="hidden" id="mocha_po_language" name="mocha_po_language" value="" />
+				<select id="mocha_po_locale" name="mocha_po_locale">
 				<?php
 				foreach ($gengo->languages as $language) {
 					?><option value=<?= $language->locale ?>><?= "$language->language ($language->locale)"?></option><?php
@@ -102,7 +134,12 @@ function mocha_update_po_strings() {
 				</select>
 				<?php
 			} else {
-				?><input type="text" id="mocha_po_language" name="mocha_po_language" style="padding: 4px" /><?php
+				?>
+				<input type="text" id="mocha_po_locale" name="mocha_po_locale" style="padding: 4px" />
+				</strong></label>
+				<label for="mocha_po_locale"><strong><?php _e("Language:", MOCHA_DOMAIN) ?>
+				<input type="text" id="mocha_po_language" name="mocha_po_language" style="padding: 4px" /><br /><br />
+				<?php
 			}
 			?>
 		</strong></label>
@@ -126,7 +163,7 @@ function mocha_update_po_strings() {
 		<?php _e("Choose a locale and localisation type to begin translating.", MOCHA_DOMAIN); ?>
 		</div>
 		<p class="submit">
-      <input type="submit" id="mocha_po_submit" name="mocha_po_submit" value="<?php _e('Save localisation &raquo;', MOCHA_DOMAIN); ?>" style="display: none" onclick="if (!document.getElementById('msgstr_prefix')) return false;" />
+      <input type="submit" id="mocha_po_submit" name="mocha_po_submit" value="<?php _e('Save localisation &raquo;', MOCHA_DOMAIN); ?>" style="display: none" />
     </p>
   </fieldset>
   </form>

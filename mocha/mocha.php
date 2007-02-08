@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Mocha
-Version: 0.1.1
+Version: 0.1.2
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
 Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
@@ -55,7 +55,7 @@ define ("MOCHA_MODE_THEME", 3);
 class Mocha {
 
 	function Mocha($ajax = false) {
-		$this->version = '0.1.1';
+		$this->version = '0.1.2';
 		$this->site_url = get_settings('siteurl');
 
 		if (false !== strpos($_SERVER['SERVER_SOFTWARE'], 'Win32')) {
@@ -195,7 +195,7 @@ class Mocha {
 		}
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $plugin_root -D $plugin_root " . implode(' ', $plugin_files))) {
-			$this->update_po_headers("$plugin_root/$name.pot", $title, $version);
+			$this->update_pot_headers("$plugin_root/$name.pot", $title, $version);
 			@chmod("$plugin_root/$name.pot", 0644);
       return true;
 		} else {
@@ -217,7 +217,7 @@ class Mocha {
 		}
 
 		if ($this->exec_wrapper("{$this->path}xgettext -k__ -k_e -k -d $name -F --from-code=UTF-8 -o $name.pot -p $theme_root -D $theme_root " . implode(' ', $theme_files))) {
-			$this->update_po_headers("$theme_root/$name.pot", $title, $version);
+			$this->update_pot_headers("$theme_root/$name.pot", $title, $version);
 			@chmod("$theme_root/$name.pot", 0644);
       return true;
 		} else {
@@ -225,14 +225,24 @@ class Mocha {
 		}
 	}
 	
-	function update_po_headers($file, $title, $version) {
+	function update_pot_headers($file, $title, $version) {
+	  global $current_user;
     $filecontents = file_get_contents($file);
 	  $charset = get_settings('blog_charset');
-    $filecontents = str_replace(array('charset=CHARSET', 'Last-Translator: FULL NAME <EMAIL@ADDRESS>', 'Project-Id-Version: PACKAGE VERSION'), array("charset=$charset", "Last-Translator: $current_user->user_firstname $current_user->user_lastname <$current_user->user_email>", "Project-Id-Version: $title $version"), $filecontents);
+	  $year = date('Y');
+    $filecontents = str_replace(array("Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER", 'under the same license as the PACKAGE package', 'SOME DESCRIPTIVE TITLE', 'charset=CHARSET', 'Last-Translator: FULL NAME <EMAIL@ADDRESS>', 'Project-Id-Version: PACKAGE VERSION'), array("Copyright (C) $year $title's copyright holder", "under the same license as $title", "$title $version POT file", "charset=$charset", "Last-Translator: $current_user->user_firstname $current_user->user_lastname <$current_user->user_email>", "Project-Id-Version: $title $version"), $filecontents);
+    file_put_contents($file, $filecontents);
+	}
+	
+	function update_po_headers($file, $language) {
+	  global $current_user;
+    $filecontents = file_get_contents($file);
+	  $year = date('Y');
+    $filecontents = str_replace(array('Language-Team: LANGUAGE <LL@li.org>', 'FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.'), array("Language-Team: $language <$current_user->user_email>", "$current_user->user_firstname $current_user->user_lastname <$current_user->user_email>, $year."), $filecontents);
     file_put_contents($file, $filecontents);
 	}
 
-	function get_po_inputs($locale, $type, $name = '') {
+	function get_po_inputs($locale, $language, $type, $name = '') {
 		global $wp_version;
 	  $generated = false;
 
@@ -250,6 +260,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN));
    					return false;
 					}
+					$this->update_po_headers(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", $language);
 					@chmod(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo", ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
@@ -281,6 +292,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
+					$this->update_po_headers(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", $language);
 					@chmod(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", 0644);
 					if (file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo", ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.po")) {
@@ -311,6 +323,7 @@ class Mocha {
 						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
    					return false;
 					}
+					$this->update_po_headers(ABSPATH . $theme['Template Dir'] . "/$locale.po", $language);
 					@chmod(ABSPATH . $theme['Template Dir'] . "/$locale.po", 0644);
 					if (file_exists(ABSPATH . $theme['Template Dir'] . "/$locale.mo")) {
 						if (!$this->populate_po_from_mo(ABSPATH . $theme['Template Dir'] . "/$locale.mo", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
@@ -583,7 +596,7 @@ if (isset($_POST['mocha_ajax'])) {
 
 	switch ($_POST['mocha_action']) {
 		case 'ajax_get_po_inputs':
-		$mocha->get_po_inputs($_POST['locale'], $_POST['type'], $_POST['name']);
+		$mocha->get_po_inputs($_POST['locale'], $_POST['language'], $_POST['type'], $_POST['name']);
 		break;
 	}
 	exit;
@@ -592,13 +605,12 @@ if (isset($_POST['mocha_ajax'])) {
 $mocha = new Mocha();
 
 /*
-Security concerns.
 Autosubmit to central repository.
 Plural Forms
-Full Headers
 Breakdown WordPress core files?
 Missing wordpress .pot, no option.
 Error checking matches %s...
+Save po files in different charsets.
 */
 
 ?>
