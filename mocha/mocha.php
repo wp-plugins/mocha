@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Mocha
-Version: 0.1.2
+Version: 0.1.3
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
 Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
@@ -55,7 +55,7 @@ define ("MOCHA_MODE_THEME", 3);
 class Mocha {
 
 	function Mocha($ajax = false) {
-		$this->version = '0.1.2';
+		$this->version = '0.1.3';
 		$this->site_url = get_settings('siteurl');
 
 		if (false !== strpos($_SERVER['SERVER_SOFTWARE'], 'Win32')) {
