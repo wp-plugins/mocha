@@ -181,8 +181,8 @@ class Mocha {
 
 	// Directory parsing code lifted from WordPress core.
 	function generate_plugin_pot_file($name) {
-		global $current_user, $wp_plugins;
-		
+		global $wp_plugins;
+
 		$plugin_root = ABSPATH . MOCHA_PLUGINS_DIR . $name;
 		$plugin_files = $this->build_file_list($plugin_root);
 		
@@ -204,7 +204,7 @@ class Mocha {
 	}
 	
 	function generate_theme_pot_file($name) {
-		global $current_user, $wp_themes;
+		global $wp_themes;
 
 		$theme_root = ABSPATH . MOCHA_THEMES_DIR . $name;
 		$theme_files = $this->build_file_list($theme_root);
@@ -227,18 +227,24 @@ class Mocha {
 	
 	function update_pot_headers($file, $title, $version) {
 	  global $current_user;
+	  $host = $_SERVER['HTTP_HOST'];
+	  $name = $current_user->user_nicename;
+	  $email = "$name@$host";
     $filecontents = file_get_contents($file);
 	  $charset = get_settings('blog_charset');
 	  $year = date('Y');
-    $filecontents = str_replace(array("Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER", 'under the same license as the PACKAGE package', 'SOME DESCRIPTIVE TITLE', 'charset=CHARSET', 'Last-Translator: FULL NAME <EMAIL@ADDRESS>', 'Project-Id-Version: PACKAGE VERSION'), array("Copyright (C) $year $title's copyright holder", "under the same license as $title", "$title $version POT file", "charset=$charset", "Last-Translator: $current_user->user_firstname $current_user->user_lastname <$current_user->user_email>", "Project-Id-Version: $title $version"), $filecontents);
+    $filecontents = str_replace(array("Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER", 'under the same license as the PACKAGE package', 'SOME DESCRIPTIVE TITLE', 'charset=CHARSET', 'Last-Translator: FULL NAME <EMAIL@ADDRESS>', 'Project-Id-Version: PACKAGE VERSION'), array("Copyright (C) $year $title's copyright holder", "under the same license as $title", "$title $version POT file", "charset=$charset", "Last-Translator: $name <$email>", "Project-Id-Version: $title $version"), $filecontents);
     file_put_contents($file, $filecontents);
 	}
 	
 	function update_po_headers($file, $language) {
 	  global $current_user;
+	  $host = $_SERVER['HTTP_HOST'];
+	  $name = $current_user->user_nicename;
+	  $email = "$name@$host";
     $filecontents = file_get_contents($file);
 	  $year = date('Y');
-    $filecontents = str_replace(array('Language-Team: LANGUAGE <LL@li.org>', 'FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.'), array("Language-Team: $language <$current_user->user_email>", "$current_user->user_firstname $current_user->user_lastname <$current_user->user_email>, $year."), $filecontents);
+    $filecontents = str_replace(array('Language-Team: LANGUAGE <LL@li.org>', 'FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.'), array("Language-Team: $language <$email>", "$name <$email>, $year."), $filecontents);
     file_put_contents($file, $filecontents);
 	}
 
@@ -406,7 +412,7 @@ class Mocha {
 						$fuzzy[$i] = true;
 					} elseif ($this->string_starts_with($line, 'msgid') && $header_parsed) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
+						$originals[$i] = stripslashes(htmlspecialchars($matches[1], ENT_COMPAT, $charset));
 						$mode = 'msgid';
 					} elseif (!$this->string_starts_with($line, '#') && $header_parsed) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgid.', MOCHA_DOMAIN), false);
@@ -417,11 +423,11 @@ class Mocha {
 				case 'msgid':
 				  if ($this->string_starts_with($line, 'msgstr')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$translations[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
+						$translations[$i] = stripslashes(htmlspecialchars($matches[1], ENT_COMPAT, $charset));
 						$mode = 'msgstr';
 					} elseif ($this->string_starts_with($line, '"')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$originals[$i] .= htmlspecialchars($matches[1], ENT_COMPAT, $charset);
+						$originals[$i] .= stripslashes(htmlspecialchars($matches[1], ENT_COMPAT, $charset));
 					} elseif (!$this->string_starts_with($line, '#')) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgid.', MOCHA_DOMAIN), false);
 						return false;
@@ -434,7 +440,7 @@ class Mocha {
 						$mode = 'comment';
 					} elseif ($this->string_starts_with($line, 'msgid')) {
 						$locations[++$i] = '';
-						$originals[$i] = htmlspecialchars($matches[1], ENT_COMPAT, $charset);
+						$originals[$i] = stripslashes(htmlspecialchars($matches[1], ENT_COMPAT, $charset));
 						preg_match('/"(.*)"/', $line, $matches);
 						$mode = 'msgid';
 					} elseif ('#, fuzzy' == trim($line)) {
@@ -442,7 +448,7 @@ class Mocha {
 						$mode = 'msgid';
 					} elseif ($this->string_starts_with($line, '"')) {
 						preg_match('/"(.*)"/', $line, $matches);
-						$translations[$i] .= htmlspecialchars($matches[1], ENT_COMPAT, $charset);
+						$translations[$i] .= stripslashes(htmlspecialchars($matches[1], ENT_COMPAT, $charset));
 					} elseif (!$this->string_starts_with($line, '#')) {
 						$this->error_message(__('Unexpected Token in PO file.  Expected comment or msgstr.', MOCHA_DOMAIN), false);
 						return false;
@@ -546,7 +552,10 @@ class Mocha {
 	
 	function save_po_strings() {
 	  global $current_user;
-	  
+
+	  $host = $_SERVER['HTTP_HOST'];
+	  $user_name = $current_user->user_nicename;
+	  $email = "$user_name@$host";
 		$locale = $_POST['mocha_po_locale'];
 		$language = $_POST['mocha_po_language'];
 		$type = $_POST['mocha_po_type'];
@@ -574,7 +583,7 @@ class Mocha {
 		$updated_contents = implode('', $this->update_po(file($file), $translations));
 		$date = date('Y-m-d H:iO');
 		$search = array('/charset=(.*)\\\\n/', '/Last-Translator: (.*)\\\\n/', '/PO-Revision-Date: (.*)\\\\n/');
-		$replace = array ("charset=$charset\\n", "Last-Translator: $current_user->user_firstname $current_user->user_lastname <$current_user->user_email>\\n", "PO-Revision-Date: $date\\n");
+		$replace = array ("charset=$charset\\n", "Last-Translator: $user_name <$email>\\n", "PO-Revision-Date: $date\\n");
     $updated_contents = preg_replace($search, $replace, $updated_contents);
 		file_put_contents($file, $updated_contents);
 

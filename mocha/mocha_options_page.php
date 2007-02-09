@@ -1,7 +1,6 @@
 <?php 
 
 $mocha->present_feedback();
-
 $themes = get_themes();
 $plugins = get_plugins();
 
