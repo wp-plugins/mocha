@@ -102,12 +102,16 @@ function mocha_update_po_strings() {
 		}
 	}
 
+	if (document.getElementById('mocha_feedback')) {
+		document.getElementById('mocha_feedback').style.display = 'none';
+	}
+	
 	mocha.onCompletion = function() {
 		document.getElementById('mocha_po_strings').innerHTML = mocha.response;
 		document.getElementById('mocha_current_type').value = mocha_type;
 		document.getElementById('mocha_po_submit').style.display = '';
 	}
-	document.getElementById('mocha_po_strings').innerHTML = '<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
+	document.getElementById('mocha_po_strings').innerHTML = '<img src="<?= $mocha->site_url . '/' . MOCHA_DIR ?>loading.gif" />&nbsp;<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
 	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_locale + '&language=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
 }
 

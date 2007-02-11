@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Mocha
-Version: 0.1.3
+Version: 0.1.4
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
 Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
@@ -55,7 +55,7 @@ define ("MOCHA_MODE_THEME", 3);
 class Mocha {
 
 	function Mocha($ajax = false) {
-		$this->version = '0.1.3';
+		$this->version = '0.1.4';
 		$this->site_url = get_settings('siteurl');
 
 		if (false !== strpos($_SERVER['SERVER_SOFTWARE'], 'Win32')) {
@@ -66,11 +66,11 @@ class Mocha {
 			// Admin UI.
 			if (is_admin()) {
 				add_action('activate_mocha/mocha.php', array(& $this, 'activated'));
-				add_action('admin_head', array(&$this, 'admin_head'));
+				add_action('admin_head', array(& $this, 'admin_head'));
 				add_action('admin_menu', array(& $this, 'admin_menu'));
 			}
 		}
-		add_action('init', array(&$this,'init'));
+		add_action('init', array(& $this,'init'));
 	}
 
 	// Hook functions.
@@ -96,9 +96,9 @@ class Mocha {
 		load_plugin_textdomain(MOCHA_DOMAIN, MOCHA_DIR);
 		if (isset($_POST['mocha_po_submit'])) {
 			if ($success) {
-				$this->update_message(__('Localisation updated successfully.', MOCHA_DOMAIN));
+				$this->update_message(__('Localisation updated successfully.', MOCHA_DOMAIN), true, true);
 			} else {
-				$this->error_message(__('Compilation of PO file failed.', MOCHA_DOMAIN));
+				$this->error_message(__("Compilation of PO file failed:<br />$this->error", MOCHA_DOMAIN), true, true);
 			}
 		}
 	}
@@ -117,22 +117,22 @@ class Mocha {
 		}
 	}
 
-	function update_message($message, $buffer = true) {
+	function update_message($message, $buffer = true, $main = false) {
 	  if ($buffer) {
       ob_start();
 		}
-	  ?><div class="updated fade"><p><?php echo $message ?></p></div><?php
+	  ?><div<?= $main ? ' id="mocha_feedback" ' : ' ' ?>class="updated fade"><p><?php echo $message ?></p></div><?php
 		if ($buffer) {
 			$this->message_buffer = ob_get_clean();
 		}
 		return true;
 	}
 	
-	function error_message($message, $buffer = true) {
+	function error_message($message, $buffer = true, $main = false) {
 	  if ($buffer) {
       ob_start();
 		}
-	  ?><div class="error"><p><strong><?php _e('Error: ', MOCHA_DOMAIN) ?></strong><?php echo $message ?></p></div><?php
+	  ?><div<?= $main ? ' id="mocha_feedback" ' : ' ' ?>class="error"><p><strong><?php _e('Error: ', MOCHA_DOMAIN) ?></strong><?php echo $message ?></p></div><?php
 		if ($buffer) {
 			$this->message_buffer = ob_get_clean();
 		}
@@ -234,7 +234,7 @@ class Mocha {
 	  $charset = get_settings('blog_charset');
 	  $year = date('Y');
     $filecontents = str_replace(array("Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER", 'under the same license as the PACKAGE package', 'SOME DESCRIPTIVE TITLE', 'charset=CHARSET', 'Last-Translator: FULL NAME <EMAIL@ADDRESS>', 'Project-Id-Version: PACKAGE VERSION'), array("Copyright (C) $year $title's copyright holder", "under the same license as $title", "$title $version POT file", "charset=$charset", "Last-Translator: $name <$email>", "Project-Id-Version: $title $version"), $filecontents);
-    file_put_contents($file, $filecontents);
+		file_put_contents($file, $filecontents);
 	}
 	
 	function update_po_headers($file, $language) {
@@ -248,35 +248,28 @@ class Mocha {
     file_put_contents($file, $filecontents);
 	}
 
+	function generate_core_pot_file() {
+    if (!file_exists(ABSPATH . MOCHA_CORE_PO_DIR)) {
+			if (!mkdir(ABSPATH . MOCHA_CORE_PO_DIR, 0755)) {
+			  $this->error_message(__('Failed to create the languages directory', MOCHA_DOMAIN));
+				return false;
+			}
+		}
+		return true;
+	}
+
 	function get_po_inputs($locale, $language, $type, $name = '') {
 		global $wp_version;
 	  $generated = false;
 
 		switch ($type) {
 			case MOCHA_MODE_CORE:
+				$title = 'WordPress';
 				$version = $wp_version;
-			  if (!file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
-			    if (!file_exists(ABSPATH . MOCHA_CORE_PO_DIR)) {
-						if (!mkdir(ABSPATH . MOCHA_CORE_PO_DIR, 0755)) {
-						  $this->error_message(__('Failed to create the languages directory', MOCHA_DOMAIN));
-	   					return false;
-						}
-					}
-					if (!@copy(ABSPATH . MOCHA_DIR . 'wordpress.pot', ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
-						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN));
-   					return false;
-					}
-					$this->update_po_headers(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", $language);
-					@chmod(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po", 0644);
-					if (file_exists(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo")) {
-						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo", ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po")) {
-							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
-   						return false;
-   					}
-					}
-					$generated = true;
-				}
 				$file = ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po";
+				$pot_file = ABSPATH . MOCHA_DIR . 'wordpress.pot';
+				$mo_file = ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo";
+				$type = 'core';
 			  break;
 			
 			case MOCHA_MODE_PLUGIN:
@@ -284,31 +277,12 @@ class Mocha {
 			  foreach ($plugins as $plugin_name => $plugin) {
 					if ($this->string_starts_with($plugin_name, "$name/")) break;
 				}
-
 				$title = $plugin['Name'];
 				$version = $plugin['Version'];
-			  if (!file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.po")) {
-				  if (!file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name.pot")) {
-						if (!$this->generate_plugin_pot_file($name)) {
-							$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
-   						return false;
-   					}
-					}
-					if (!@copy(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/" . $name . ".pot", ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po")) {
-						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
-   					return false;
-					}
-					$this->update_po_headers(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", $language);
-					@chmod(ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po", 0644);
-					if (file_exists(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo")) {
-						if (!$this->populate_po_from_mo(ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.mo", ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name-$locale.po")) {
-							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
-   						return false;
-   					}
-					}
-					$generated = true;
-				}
 				$file = ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po";
+				$pot_file = ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name.pot";
+				$mo_file = ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.mo";
+				$type = 'plugin';
 			  break;
 
 			case MOCHA_MODE_THEME:
@@ -316,34 +290,44 @@ class Mocha {
 			  foreach ($themes as $title => $theme) {
 					if ($theme['Template'] == $name) break;
 				}
-
 				$version = $theme['Version'];
-			  if (!file_exists(ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
-				  if (!file_exists(ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot")) {
-						if (!$this->generate_theme_pot_file($name)) {
-							$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
-   						return false;
-   					}
-					}
-					if (!@copy(ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
-						$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
-   					return false;
-					}
-					$this->update_po_headers(ABSPATH . $theme['Template Dir'] . "/$locale.po", $language);
-					@chmod(ABSPATH . $theme['Template Dir'] . "/$locale.po", 0644);
-					if (file_exists(ABSPATH . $theme['Template Dir'] . "/$locale.mo")) {
-						if (!$this->populate_po_from_mo(ABSPATH . $theme['Template Dir'] . "/$locale.mo", ABSPATH . $theme['Template Dir'] . "/$locale.po")) {
-							$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
-   						return false;
-   					}
-					}
-					$generated = true;
-				}
 				$file = ABSPATH . $theme['Template Dir'] . "/$locale.po";
+		    $pot_file = ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot";
+				$mo_file = ABSPATH . $theme['Template Dir'] . "/$locale.mo";
+				$type = 'theme';
 			  break;
 		}
 
+	  if (!file_exists($file)) {
+		  if (!file_exists($pot_file)) {
+		    $function = "generate_{$type}_pot_file";
+				if (!$this->$function($name)) {
+					$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
+					return false;
+				}
+			}
+			if (!@copy($pot_file, $file)) {
+				$this->error_message(__('Failed to create a copy of the base POT file', MOCHA_DOMAIN), false);
+				return false;
+			}
+			$this->update_po_headers($file, $language);
+			@chmod($file, 0644);
+			if (file_exists($mo_file)) {
+				if (!$this->populate_po_from_mo($mo_file, $file)) {
+					$this->error_message(sprintf(__('Failed to merge existing MO information with new PO: %s', MOCHA_DOMAIN), $this->error), false);
+					return false;
+				}
+				$merged = true;
+			}
+			$generated = true;
+		}
+
 		$po_contents = file($file);
+		if ($merged) {
+			$po_contents_string = implode('', $po_contents);
+			$po_contents_string = preg_replace('/Project-Id-Version:(.*)\\\\n/', "Project-Id-Version: $title $version" . '\\\\n', $po_contents_string);
+			file_put_contents($file, $po_contents_string);
+		}
 		if (!$generated) {
 			$po_contents_string = implode('', $po_contents);
 			if (preg_match('/"Project-Id-Version: (?:.*) (.*)\\\\n/', $po_contents_string, $matches)) {
@@ -352,7 +336,6 @@ class Mocha {
 					switch ($type) {
 						case MOCHA_MODE_CORE:
 						  $this->retrieve_wordpress_pot();
-						  $new_pot = ABSPATH . MOCHA_DIR . 'wordpress.pot';
 						  break;
 						  
 						case MOCHA_MODE_PLUGIN:
@@ -360,7 +343,6 @@ class Mocha {
 								$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
 	   						return false;
 	   					}
-	   					$new_pot = ABSPATH . MOCHA_PLUGINS_DIR . $name . "/" . $name . ".pot";
 						  break;
 						  
 						case MOCHA_MODE_THEME:
@@ -368,12 +350,11 @@ class Mocha {
 								$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
 	   						return false;
 	   					}
-							$new_pot = ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot";
 						  break;
 					}
-
-					if (!$this->exec_wrapper("{$this->path}msgmerge -o $file -F $file $new_pot")) {
-						$this->error_message(__('Failed to update the .po file to latest version.', MOCHA_DOMAIN), false);
+					if (!$this->exec_wrapper("{$this->path}msgmerge -o $file -F $file $pot_file")) {
+						$this->error_message(sprintf(__("Failed to update the .po file to latest version: %s", MOCHA_DOMAIN), $this->error), false);
+						return false;
 					}
 
 			    $filecontents = file_get_contents($file);
@@ -523,13 +504,13 @@ class Mocha {
 		return $return;
 	}
 	
-	function update_po(& $po_contents, & $translations) {
+	function update_po_data(& $po_contents, & $translations) {
 		$i = 0;
 		$mode = '';
 		$header_parsed = false;
 		foreach ($po_contents as $po_line) {
 			if ($this->string_starts_with($po_line, 'msgstr')) {
-				$updated_contents[] = 'msgstr "' . stripslashes($translations[$i++]) . "\"\n";
+				$updated_contents[] = 'msgstr "' . str_replace('\\\\\\', '\\\\', $translations[$i++]) . "\"\n";
 				$mode = 'msgstr';
 			} elseif ($this->string_starts_with($po_line, '"')) {
 				if ($header_parsed && ('msgstr' == $mode)) {
@@ -580,7 +561,7 @@ class Mocha {
 			  break;
 		}
 		$file = $dir . $file_name . '.po';
-		$updated_contents = implode('', $this->update_po(file($file), $translations));
+		$updated_contents = implode('', $this->update_po_data(file($file), $translations));
 		$date = date('Y-m-d H:iO');
 		$search = array('/charset=(.*)\\\\n/', '/Last-Translator: (.*)\\\\n/', '/PO-Revision-Date: (.*)\\\\n/');
 		$replace = array ("charset=$charset\\n", "Last-Translator: $user_name <$email>\\n", "PO-Revision-Date: $date\\n");
@@ -620,6 +601,7 @@ Breakdown WordPress core files?
 Missing wordpress .pot, no option.
 Error checking matches %s...
 Save po files in different charsets.
+Error updating .po file.
 */
 
 ?>
