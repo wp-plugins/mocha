@@ -90,16 +90,28 @@ class Mocha {
 	}
 
 	function init() {
-		if (isset($_POST['mocha_po_submit'])) {
-			$success = $this->save_po_strings();
-		}
-		load_plugin_textdomain(MOCHA_DOMAIN, MOCHA_DIR);
-		if (isset($_POST['mocha_po_submit'])) {
-			if ($success) {
-				$this->update_message(__('Localisation updated successfully.', MOCHA_DOMAIN), true, true);
-			} else {
-				$this->error_message(__("Compilation of PO file failed:<br />$this->error", MOCHA_DOMAIN), true, true);
+	  global $wp_version;
+	  if (is_admin()) {
+			if (isset($_POST['mocha_po_submit'])) {
+				$success = $this->save_po_strings();
+			} elseif (isset($_POST['mocha_retrieve_core_pot'])) {
+				$success = $this->retrieve_wordpress_pot();
 			}
+			load_plugin_textdomain(MOCHA_DOMAIN, MOCHA_DIR);
+			if (isset($_POST['mocha_po_submit'])) {
+				if ($success) {
+					$this->update_message(__('Localisation updated successfully.', MOCHA_DOMAIN), true);
+				} else {
+					$this->error_message(sprintf(__("Compilation of PO file failed: %s", MOCHA_DOMAIN), $this->error), true);
+				}
+			}	elseif (isset($_POST['mocha_retrieve_core_pot'])) {
+				if ($success) {
+					$this->update_message(sprintf(__('WordPress %s .pot file successfully retrieved.', MOCHA_DOMAIN), $wp_version), true);
+				} else {
+					$this->error_message(sprintf(__("A .pot file for WordPress %s is still not available", MOCHA_DOMAIN), $wp_version), true);
+				}
+			}
+
 		}
 	}
 
@@ -111,28 +123,28 @@ class Mocha {
 	  $wordpress_version = (false !== ($position = strpos($wp_version, '-'))) ? substr($wp_version, 0, $position) : $wp_version;
 		$wordpress_pot = ABSPATH . MOCHA_DIR . 'wordpress.pot';
 	  if (ini_get('allow_url_fopen')) {
-      @copy("http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot", $wordpress_pot);
+      return @copy("http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot", $wordpress_pot);
 		} else {
-			$this->exec_wrapper("wget -O $wordpress_pot http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot");
+			return $this->exec_wrapper("wget -O $wordpress_pot http://svn.automattic.com/wordpress-i18n/pot/tags/$wordpress_version/wordpress.pot");
 		}
 	}
 
-	function update_message($message, $buffer = true, $main = false) {
+	function update_message($message, $buffer = true) {
 	  if ($buffer) {
       ob_start();
 		}
-	  ?><div<?= $main ? ' id="mocha_feedback" ' : ' ' ?>class="updated fade"><p><?php echo $message ?></p></div><?php
+	  ?><div<?= $buffer ? ' id="mocha_feedback" ' : ' ' ?>class="updated fade"><p><?php echo $message ?></p></div><?php
 		if ($buffer) {
 			$this->message_buffer = ob_get_clean();
 		}
 		return true;
 	}
 	
-	function error_message($message, $buffer = true, $main = false) {
+	function error_message($message, $buffer = true) {
 	  if ($buffer) {
       ob_start();
 		}
-	  ?><div<?= $main ? ' id="mocha_feedback" ' : ' ' ?>class="error"><p><strong><?php _e('Error: ', MOCHA_DOMAIN) ?></strong><?php echo $message ?></p></div><?php
+	  ?><div<?= $buffer ? ' id="mocha_feedback" ' : ' ' ?>class="error"><p><strong><?php _e('Error: ', MOCHA_DOMAIN) ?></strong><?php echo $message ?></p></div><?php
 		if ($buffer) {
 			$this->message_buffer = ob_get_clean();
 		}
@@ -601,7 +613,6 @@ Breakdown WordPress core files?
 Missing wordpress .pot, no option.
 Error checking matches %s...
 Save po files in different charsets.
-Error updating .po file.
 */
 
 ?>

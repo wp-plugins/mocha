@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 $mocha->present_feedback();
 $themes = get_themes();
@@ -48,7 +48,6 @@ if (typeof(sack) != 'undefined') {
 	var mocha = new sack(mocha_script_uri);
 	mocha.method = 'POST';
 }
-
 function mocha_filter_po_name() {
 	var mocha_type = document.getElementById('mocha_po_type').options[document.getElementById('mocha_po_type').selectedIndex].value;
 	var mocha_name = document.getElementById('mocha_po_name');
@@ -111,10 +110,10 @@ function mocha_update_po_strings() {
 		document.getElementById('mocha_current_type').value = mocha_type;
 		document.getElementById('mocha_po_submit').style.display = '';
 	}
-	document.getElementById('mocha_po_strings').innerHTML = '<img src="<?= $mocha->site_url . '/' . MOCHA_DIR ?>loading.gif" />&nbsp;<?php _e('Loading Strings...', MOCHA_DOMAIN) ?>';
+	document.getElementById('mocha_po_strings').innerHTML = '<p><img src="<?= $mocha->site_url . '/' . MOCHA_DIR ?>loading.gif" />&nbsp;<?php _e('Loading Strings...', MOCHA_DOMAIN) ?></p>';
 	mocha.runAJAX('mocha_ajax=true&mocha_action=ajax_get_po_inputs&locale=' + mocha_locale + '&language=' + mocha_language + '&type=' + mocha_type + '&name=' + mocha_name);
 }
-
+addLoadEvent(mocha_filter_po_name);
 </script>
 <div class="wrap">
   <h2><?php _e('Localisations', MOCHA_DOMAIN) ?></h2>
@@ -148,7 +147,10 @@ function mocha_update_po_strings() {
 		</strong></label>
 		<label for="mocha_po_type"><strong><?php _e("Type:", MOCHA_DOMAIN) ?></strong>
 			<select id="mocha_po_type" name="mocha_po_type" onchange="mocha_filter_po_name()">
-			<option value="<?= MOCHA_MODE_CORE ?>"><?php _e("WordPress Core Files", MOCHA_DOMAIN) ?></option>
+			<?php if ($core_exists = file_exists(ABSPATH . MOCHA_DIR . 'wordpress.pot')) {
+				?><option value="<?= MOCHA_MODE_CORE ?>"><?php _e("WordPress Core Files", MOCHA_DOMAIN) ?></option><?php
+			}
+			?>
 			<option value="<?= MOCHA_MODE_PLUGIN ?>"><?php _e("Plugins", MOCHA_DOMAIN) ?></option>
 			<option value="<?= MOCHA_MODE_THEME ?>"><?php _e("Themes", MOCHA_DOMAIN) ?></option>
 			</select>
@@ -163,7 +165,7 @@ function mocha_update_po_strings() {
     </span>
     </p>
 		<div id="mocha_po_strings">
-		<?php _e("Choose a locale and localisation type to begin translating.", MOCHA_DOMAIN); ?>
+		<p><?php _e("Choose a locale and localisation type to begin translating.", MOCHA_DOMAIN); ?></p>
 		</div>
 		<p class="submit">
       <input type="submit" id="mocha_po_submit" name="mocha_po_submit" value="<?php _e('Save localisation &raquo;', MOCHA_DOMAIN); ?>" style="display: none" />
@@ -171,3 +173,20 @@ function mocha_update_po_strings() {
   </fieldset>
   </form>
 </div>
+<?php
+if (!$core_exists) {
+	?>
+	<div class="wrap">
+	  <form method="post">
+		<p>
+			<strong><?php _e('Note:', GENGO_DOMAIN) ?></strong>
+			<?php printf(__("WordPress core localisation is not available because a .pot file is not available for WordPress %s yet.  Mocha will automatically check for a core .pot file whenever your WordPress installation is upgraded or Mocha is re-activated.", MOCHA_DOMAIN), $wp_version); ?>
+		</p>
+		<p class="submit">
+	    <input type="submit" name="mocha_retrieve_core_pot" value="<?php _e('Check Now', MOCHA_DOMAIN); ?>" />
+	  </p>
+	  </form>
+	</div>
+	<?php
+}
+?>
