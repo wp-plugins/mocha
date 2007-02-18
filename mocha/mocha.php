@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Mocha
-Version: 0.1.4
+Version: 0.1.6
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
 Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
@@ -55,7 +55,7 @@ define ("MOCHA_MODE_THEME", 3);
 class Mocha {
 
 	function Mocha($ajax = false) {
-		$this->version = '0.1.4';
+		$this->version = '0.1.6';
 		$this->site_url = get_settings('siteurl');
 
 		if (false !== strpos($_SERVER['SERVER_SOFTWARE'], 'Win32')) {
@@ -111,7 +111,6 @@ class Mocha {
 					$this->error_message(sprintf(__("A .pot file for WordPress %s is still not available", MOCHA_DOMAIN), $wp_version), true);
 				}
 			}
-
 		}
 	}
 
@@ -281,7 +280,7 @@ class Mocha {
 				$file = ABSPATH . MOCHA_CORE_PO_DIR . "$locale.po";
 				$pot_file = ABSPATH . MOCHA_DIR . 'wordpress.pot';
 				$mo_file = ABSPATH . MOCHA_CORE_PO_DIR . "$locale.mo";
-				$type = 'core';
+				$pot_type = 'core';
 			  break;
 			
 			case MOCHA_MODE_PLUGIN:
@@ -294,7 +293,7 @@ class Mocha {
 				$file = ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.po";
 				$pot_file = ABSPATH . MOCHA_PLUGINS_DIR . "/$name/$name.pot";
 				$mo_file = ABSPATH . MOCHA_PLUGINS_DIR . $name . "/$name-$locale.mo";
-				$type = 'plugin';
+				$pot_type = 'plugin';
 			  break;
 
 			case MOCHA_MODE_THEME:
@@ -306,13 +305,13 @@ class Mocha {
 				$file = ABSPATH . $theme['Template Dir'] . "/$locale.po";
 		    $pot_file = ABSPATH . $theme['Template Dir'] . "/" . $theme['Template'] . ".pot";
 				$mo_file = ABSPATH . $theme['Template Dir'] . "/$locale.mo";
-				$type = 'theme';
+				$pot_type = 'theme';
 			  break;
 		}
 
 	  if (!file_exists($file)) {
 		  if (!file_exists($pot_file)) {
-		    $function = "generate_{$type}_pot_file";
+		    $function = "generate_{$pot_type}_pot_file";
 				if (!$this->$function($name)) {
 					$this->error_message(sprintf(__('Failed to generate a POT file: %s', MOCHA_DOMAIN), $this->error), false);
 					return false;
@@ -610,7 +609,6 @@ $mocha = new Mocha();
 Autosubmit to central repository.
 Plural Forms
 Breakdown WordPress core files?
-Missing wordpress .pot, no option.
 Error checking matches %s...
 Save po files in different charsets.
 */
