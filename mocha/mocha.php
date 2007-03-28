@@ -43,7 +43,7 @@ if (!defined('ABSPATH')) {
 
 define ("MOCHA_BASE_DIR", "mocha/");
 define ("MOCHA_DIR", "wp-content/plugins/" . MOCHA_BASE_DIR);
-define ("MOCHA_OPTIONS_PAGE", "mocha_options_page.php");
+define ("MOCHA_ADMIN_PAGE", "mocha_options_page.php");
 define ("MOCHA_DOMAIN", "mocha");
 define ("MOCHA_CORE_PO_DIR", 'wp-includes/languages/');
 define ("MOCHA_PLUGINS_DIR", 'wp-content/plugins/');
@@ -76,12 +76,24 @@ class Mocha {
 	// Hook functions.
 
 	function admin_menu() {
-		add_options_page(__('Mocha Options', MOCHA_DOMAIN), __('Mocha', MOCHA_DOMAIN), 8, MOCHA_DIR . MOCHA_OPTIONS_PAGE);
+		global $language_menu;
+		if (current_user_can('use_mocha')) {
+			if (!$language_menu) {
+				add_menu_page(__('Language Options', MOHAWK_DOMAIN), __('Languages', MOCHA_DOMAIN), 1, MOCHA_DIR . MOCHA_ADMIN_PAGE);
+				$language_menu = MOCHA_DIR . MOCHA_ADMIN_PAGE;
+			}
+			add_submenu_page($language_menu, __('Mocha Options', MOCHA_DOMAIN), __('Mocha', MOCHA_DOMAIN), 1, MOCHA_DIR . MOCHA_ADMIN_PAGE);
+		}
 	}
 
 	function activated() {
+		global $wp_roles;
+		$role = $wp_roles->get_role('administrator');
+		$role->add_cap('use_mocha');
+		$role = $wp_roles->get_role('author');
+		$role->add_cap('use_mocha');
 	  $this->retrieve_wordpress_pot();
-		header('Location: admin.php?page=' . MOCHA_BASE_DIR . MOCHA_OPTIONS_PAGE);
+		header('Location: admin.php?page=' . MOCHA_BASE_DIR . MOCHA_ADMIN_PAGE);
 		die();
 	}
 
@@ -110,7 +122,7 @@ class Mocha {
 				} else {
 					$this->error_message(sprintf(__("A .pot file for WordPress %s is still not available", MOCHA_DOMAIN), $wp_version), true);
 				}
-			}
+			}				
 		}
 	}
 

@@ -1,5 +1,9 @@
 <?php
 
+if (!current_user_can('use_mocha')) {
+	die( __('You do not have sufficient permissions to access this page.') );
+}
+
 $mocha->present_feedback();
 $themes = get_themes();
 $plugins = get_plugins();
