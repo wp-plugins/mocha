@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Mocha
-Version: 0.1.6
+Version: 0.1.7
 Plugin URI: http://jamietalbot.com/wp-hacks/mocha/
 Description: WordPress .po and .mo file generation.  Licensed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a>, Copyright &copy; 2007 Jamie Talbot.
 Author: Jamie Talbot
@@ -37,8 +37,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Load some variables for when running as ajax.
 if (!defined('ABSPATH')) {
 	$gengo_use_default_language = true;
-	require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '/wp-blog-header.php');
-	require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '/wp-admin/admin-functions.php');
+	require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/wp-blog-header.php');
+	require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/wp-admin/admin-functions.php');
 }
 
 define ("MOCHA_BASE_DIR", "mocha/");
