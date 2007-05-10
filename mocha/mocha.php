@@ -79,7 +79,7 @@ class Mocha {
 		global $language_menu;
 		if (current_user_can('use_mocha')) {
 			if (!$language_menu) {
-				add_menu_page(__('Language Options', MOHAWK_DOMAIN), __('Languages', MOCHA_DOMAIN), 1, MOCHA_DIR . MOCHA_ADMIN_PAGE);
+				add_menu_page(__('Language Options', MOCHA_DOMAIN), __('Language', MOCHA_DOMAIN), 1, MOCHA_DIR . MOCHA_ADMIN_PAGE);
 				$language_menu = MOCHA_DIR . MOCHA_ADMIN_PAGE;
 			}
 			add_submenu_page($language_menu, __('Mocha Options', MOCHA_DOMAIN), __('Mocha', MOCHA_DOMAIN), 1, MOCHA_DIR . MOCHA_ADMIN_PAGE);
@@ -615,11 +615,33 @@ if (isset($_POST['mocha_ajax'])) {
 	exit;
 }
 
+// PHP 4 Compatibility.  Thanks to kingler for the prompting.
+if (!function_exists('file_put_contents')) {
+	function file_put_contents($filename, $data) {
+		if (!$handle = fopen($filename, 'w')) {
+			trigger_error(__('Cannot open file for writing', MOCHA_DOMAIN), E_USER_ERROR);
+		}		
+		fputs($handle, $data);
+		fclose($handle);
+	}
+}
+
+if (!function_exists('file_get_contents')) {
+	function file_get_contents($filename) {
+		if (!$handle = fopen($filename, 'r')) {
+			trigger_error(__('Cannot open file for reading', MOCHA_DOMAIN), E_USER_ERROR);
+		}		
+		$fcontents = fread($fhandle, filesize($filename));
+		fclose($fhandle);
+	}
+}
+
 $mocha = new Mocha();
 
 /*
 Autosubmit to central repository.
 Plural Forms
+LANGDIR
 Breakdown WordPress core files?
 Error checking matches %s...
 Save po files in different charsets.
